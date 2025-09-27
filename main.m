@@ -5,13 +5,17 @@ Ly = 0.5;  % Length of the mesh in y-direction
 
 fprintf(['Plot the mesh: Section no.1 \nGauss Seidel Solver: Section no.2 \n' ...
     'Prove mesh independence: Section no.3 \nPlot Heat flow (vector plot): Section no.4 \n'])
-section = input('What do you want to do? Pls enter the Section No. ');
+section = input('What do you want to do? Pls enter the Section No.');
 
 if section ~= 3
     Nx = input('Enter the no.of cells you want in x-direction: ');
     Ny = input('Enter the no.of cells you want in y-direction: ');
     str_x = input('Enter the stretch(%) you would like in x-direction: ');
-    str_y = input('Enter the stretch(%) you would like in y-direction:  ');
+    str_y = input('Enter the stretch(%) you would like in y-direction: ');
+end
+
+if section ~= 1
+    epsilon = input('Enter error tolerance you would like to set: ');
 end
 %% Plotting the mesh (Section-1)
 if section == 1
@@ -32,13 +36,11 @@ if section == 1
 end
 %% Solving using Gauss-Seidel Method (Section-2) 
 if section == 2
-    
     [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx, Ny, Lx, Ly, str_x, str_y);
-    epsilon = 1e-4; % Error Tolerance for convergence
     
     T = zeros(Ny+2, Nx+2);
-    num_iter = 100000;
-    for n = 1:num_iter
+    max_iter = 100000;
+    for n = 1:max_iter
         fprintf('Iteration no. %d \n', n)
         [T, cnvrg_val] = GaussSeidelSolver(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly);
         residuals(n) = cnvrg_val;
@@ -67,13 +69,12 @@ if section == 3
     str_x = 0; str_y = 0;
     
     [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx(l), Ny(l), Lx, Ly, str_x, str_y);
-    epsilon = 1e-4; % Error Tolerance for convergence
-    num_iter = 100000;
+    max_iter = 100000;
     for l = 1:length(Nx)
         fprintf('Solving for %dx%d \n', Nx(l), Ny(l))
         T = zeros(Ny(l)+2, Nx(l)+2);
     
-        for n = 1:num_iter
+        for n = 1:max_iter
             [T, cnvrg_val] = GaussSeidelSolver(T, nodesx, nodesy, dx, dy, Nx(l), Ny(l), Lx, Ly);
             if cnvrg_val < epsilon
                 break
@@ -96,13 +97,11 @@ if section == 3
 end
 %% Plotting Heat Flow (Section-4)
 if section == 4
-    str_x = 25; str_y = 15;
     [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx, Ny, Lx, Ly, str_x, str_y);
-    epsilon = 1e-4; % Error Tolerance for convergence
     
     T = zeros(Ny+2, Nx+2);
-    num_iter = 100000;
-    for n = 1:num_iter
+    max_iter = 100000;
+    for n = 1:max_iter
         [T, cnvrg_val] = GaussSeidelSolver(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly);   
         if cnvrg_val < epsilon
             break
@@ -144,14 +143,16 @@ if section == 4
     contourf(X_nodes, Y_nodes, T, 20, "LineStyle", 'none');
     c = colorbar;
     c.Label.String = 'Temperature';
+    c.Label.FontSize = 12;
     hold on;
     
-    quiver(X_nodes, Y_nodes, qx, qy, 'k', 'AutoScaleFactor', 1.5);
+    quiver(X_nodes, Y_nodes, qx, qy, 'k', 'AutoScaleFactor', 2);
     
     hold off;
-    title('Vector plot of Heat Flux');
-    xlabel('x');
-    ylabel('y');
+    ax = gca;
+    ax.FontSize = 14;
+    xlabel('x', 'FontSize', 20);
+    ylabel('y', 'FontSize', 20);
     set(gca, 'YDir', 'normal');
 end
 %% Gauss Scidel Iterative Solver (Case-4)
@@ -304,6 +305,9 @@ aP = aW + aE + aS + aN;
 Su = S * delx * dely;
 end
 %% Create Mesh
+% To stretch/contract from the centre of the mesh in both directions
+% Use (+ve) change to contract on both sides from the centre
+% Use (-ve) change to stretch on both sides from the centre
 function [x_lines, y_lines, dx, dy, nodesx, nodesy] = generateMesh(Nx, Ny, Lx, Ly, change_x, change_y)
     dx = Lx/Nx; 
     dy = Ly/Ny;

@@ -1,16 +1,20 @@
 clear; close all;
 
-Nx = 40;   % No.of cells in x-direction
-Ny = 40;   % No.of cells in y-direction
 Lx = 1;    % Length of the mesh in x-direction
 Ly = 0.5;  % Length of the mesh in y-direction
 
 fprintf(['Plot the mesh: Section no.1 \nGauss Seidel Solver: Section no.2 \n' ...
     'Prove mesh independence: Section no.3 \nPlot Heat flow (vector plot): Section no.4 \n'])
-section = input('What do you want to do');
+section = input('What do you want to do? Pls enter the Section No.');
+
+if section ~= 3
+    Nx = input('Enter the no.of cells you want in x-direction: ');
+    Ny = input('Enter the no.of cells you want in y-direction: ');
+    str_x = input('Enter the stretch(%) you would like in x-direction: ');
+    str_y = input('Enter the stretch(%) you would like in y-direction: ');
+end
 %% Plotting the mesh (Section-1)
 if section == 1
-    str_x = 25; str_y = 15;
     [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx, Ny, Lx, Ly, str_x, str_y);
     
     figure(1);
@@ -28,7 +32,7 @@ if section == 1
 end
 %% Solving using Gauss-Seidel Method (Section-2) 
 if section == 2
-    str_x = 25; str_y = 15;
+
     [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx, Ny, Lx, Ly, str_x, str_y);
     epsilon = 1e-4; % Error Tolerance for convergence
     
@@ -94,6 +98,18 @@ end
 if section == 4
     str_x = 25; str_y = 15;
     [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx, Ny, Lx, Ly, str_x, str_y);
+    epsilon = 1e-4; % Error Tolerance for convergence
+    
+    T = zeros(Ny+2, Nx+2);
+    num_iter = 100000;
+    for n = 1:num_iter
+        [T, cnvrg_val] = GaussSeidelSolver(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly);   
+        if cnvrg_val < epsilon
+            break
+        else
+            continue
+        end
+    end
 
     dTdx = zeros(Ny+2, Nx+2);
     dTdy = zeros(Ny+2, Nx+2);
@@ -128,14 +144,16 @@ if section == 4
     contourf(X_nodes, Y_nodes, T, 20, "LineStyle", 'none');
     c = colorbar;
     c.Label.String = 'Temperature';
+    c.Label.FontSize = 12;
     hold on;
     
-    quiver(X_nodes, Y_nodes, qx, qy, 'k', 'AutoScaleFactor', 1.5);
+    quiver(X_nodes, Y_nodes, qx, qy, 'k', 'AutoScaleFactor', 2);
     
     hold off;
-    title('Vector plot of Heat Flux');
-    xlabel('x');
-    ylabel('y');
+    ax = gca;
+    ax.FontSize = 14;
+    xlabel('x', 'FontSize', 20);
+    ylabel('y', 'FontSize', 20);
     set(gca, 'YDir', 'normal');
 end
 %% Gauss Scidel Iterative Solver (Case-4)
@@ -288,6 +306,8 @@ aP = aW + aE + aS + aN;
 Su = S * delx * dely;
 end
 %% Create Mesh
+% Has the capab to stretch/contract from the centre of the mesh in
+% both directions
 function [x_lines, y_lines, dx, dy, nodesx, nodesy] = generateMesh(Nx, Ny, Lx, Ly, change_x, change_y)
     dx = Lx/Nx; 
     dy = Ly/Ny;
