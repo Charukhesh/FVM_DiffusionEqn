@@ -1,11 +1,11 @@
 clear; close all;
 
-Nx = 40;   % No.of cells in x-direction
-Ny = 40;   % No.of cells in y-direction
+Nx = 20;   % No.of cells in x-direction
+Ny = 20;   % No.of cells in y-direction
 Lx = 1;    % Length of the mesh in x-direction
 Ly = 0.5;  % Length of the mesh in y-direction
 %% Plotting the mesh
-str_x = 25; str_y = 15;
+str_x = 0; str_y = 10;
 [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx, Ny, Lx, Ly, str_x, str_y);
 
 figure(1);
@@ -27,7 +27,7 @@ T = zeros(Ny+2, Nx+2);
 num_iter = 100000;
 for n = 1:num_iter
     fprintf('Iteration no. %d \n', n)
-    [T, cnvrg_val] = GaussSeidelSolver(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly);
+    [T, cnvrg_val] = GaussScidelSolver(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly);
     residuals(n) = cnvrg_val;
     disp(cnvrg_val)
 
@@ -123,7 +123,7 @@ xlabel('x');
 ylabel('y');
 set(gca, 'YDir', 'normal');
 %% Gauss Scidel Iterative Solver (Case-4)
-function [T, cnvrg_val] = GaussSeidelSolver(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly)
+function [T, cnvrg_val] = GaussScidelSolver(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly)
 S = -1.5; q = -5000;
 % Boundary Conditions for 1
 T(1, :) = 15;
@@ -158,7 +158,7 @@ end
 cnvrg_val = calcResErr(T, nodesx, nodesy, Nx, Ny, dx, dy, Lx, Ly, S);
 end
 %% Gauss Scidel Iterative Solver (switching Neumann & Dirichlet Conditions)
-function [T, cnvrg_val] = GaussSeidelSolvernew(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly)
+function [T, cnvrg_val] = GaussScidelSolvernew(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly)
         S = -1.5; q = -5000;
         % Boundary Conditions for 1
         T(1, :) = 15;
@@ -192,7 +192,7 @@ function [T, cnvrg_val] = GaussSeidelSolvernew(T, nodesx, nodesy, dx, dy, Nx, Ny
         cnvrg_val = calcResErr(T, nodesx, nodesy, Nx, Ny, dx, dy, Lx, Ly, S);
     end
 %% Gauss Scidel Iterative Solver (Case-3)
-    function [T, cnvrg_val] = GaussSeidelSolverCase3(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly)
+    function [T, cnvrg_val] = GaussScidelSolverCase3(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly)
         S = -1.5; q = 5000;
         % Boundary Conditions for 1
         T(1, :) = 15;
