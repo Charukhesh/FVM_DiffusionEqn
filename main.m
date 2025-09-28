@@ -5,7 +5,7 @@ Ly = 0.5;  % Length of the mesh in y-direction
 
 fprintf(['Plot the mesh: Section no.1 \nGauss Seidel Solver: Section no.2 \n' ...
     'Prove mesh independence: Section no.3 \nEffect of different error tolerance: Section no.4 \n' ...
-    'Plot Heat flow (vector plot): Section no.5 \n'])
+    'Plot Heat flow (vector plot): Section no.5 \nChange BCs: Section no.6 \n'])
 section = input('What do you want to do? Pls enter the Section No.');
 
 if section ~= 3
@@ -124,7 +124,6 @@ if section == 4
              'DisplayName', sprintf('eps = %.0e', eps));
         hold on
     end
-    title('Convergence History');
     xlabel('Iteration Number');
     ylabel('Residual');
     legend show
@@ -133,7 +132,7 @@ if section == 4
     err_norm_1 = norm(T_dict{1}(:) - T_dict{3}(:), 2);
     err_norm_2 = norm(T_dict{2}(:) - T_dict{3}(:), 2);   % L2 norm
     fprintf('L2 norm difference (eps=1e-4 vs 1e-6): %.6e\n', err_norm_1);
-    fprintf('L2 norm difference (eps=1e-5 vs 1e-6): %.6e\n', err_norm_1);
+    fprintf('L2 norm difference (eps=1e-5 vs 1e-6): %.6e\n', err_norm_2);
 end
 %% Plotting Heat Flow (Section-5)
 if section == 5
@@ -180,7 +179,7 @@ if section == 5
     
     % Heat-flux Vector plot
     figure;
-    contourf(X_nodes, Y_nodes, T, 30, "LineStyle", 'none');
+    contourf(X_nodes, Y_nodes, T, 30, "LineStyle", 'none'); 
     c = colorbar;
     c.Label.String = 'Temperature';
     c.Label.FontSize = 12;
@@ -194,6 +193,83 @@ if section == 5
     xlabel('x', 'FontSize', 20);
     ylabel('y', 'FontSize', 20);
     set(gca, 'YDir', 'normal');
+end
+%% Changing boundary conditions (Section-6)
+if section == 6
+    [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx, Ny, Lx, Ly, str_x, str_y);
+    
+    T_dict = cell(1, 2);
+    for a = 1:2
+        T = zeros(Ny+2, Nx+2);
+        max_iter = 100000;
+        for n = 1:max_iter
+            if a == 1
+                [T, cnvrg_val] = GaussSeidelSolvernew(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly);
+                T_dict{a} = T;
+            else
+                [T, cnvrg_val] = GaussSeidelSolver(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly);
+                T_dict{a} = T;
+            end
+
+            if cnvrg_val < epsilon
+                break
+            else
+                continue
+            end
+        end
+    
+        dTdx = zeros(Ny+2, Nx+2);
+        dTdy = zeros(Ny+2, Nx+2);
+        
+        [X_nodes, Y_nodes] = meshgrid(nodesx, nodesy);
+        for i = 1:Ny+2
+            dTdx(i, 1) = (T(i, 2) - T(i, 1)) / (nodesx(2) - nodesx(1));
+        
+            for j = 2:Ny+1
+                dTdx(i, j) = (T(i, j+1) - T(i, j-1)) / (nodesx(j+1) - nodesx(j-1));
+            end
+        
+            dTdx(i, end) = (T(i, end) - T(i, end-1)) / (nodesx(end) - nodesx(end-1));
+        end
+        
+        for j = 1:Nx+2
+            dTdy(1, j) = (T(2, j) - T(1, j)) / (nodesy(2) - nodesy(1));
+        
+            for i = 2:Ny+1
+                dTdy(i, j) = (T(i+1, j) - T(i-1, j)) / (nodesy(i+1) - nodesy(i-1));
+            end
+        
+            dTdy(end, j) = (T(end, j) - T(end-1, j)) / (nodesy(end) - nodesy(end-1));
+        end
+        
+        K = 16 .* (nodesy / Ly) + 16;
+        qx = -K .* dTdx;
+        qy = -K .* dTdy;
+        
+        % Heat-flux Vector plot
+        figure;
+        contourf(X_nodes, Y_nodes, T, 30, "LineStyle", 'none');
+        c = colorbar;
+        c.Label.String = 'Temperature';
+        c.Label.FontSize = 12;
+        hold on;
+        
+        quiver(X_nodes, Y_nodes, qx, qy, 'k', 'AutoScaleFactor', 2);
+        
+        hold off;
+        ax = gca;
+        ax.FontSize = 14;
+        xlabel('x', 'FontSize', 20);
+        ylabel('y', 'FontSize', 20);
+        set(gca, 'YDir', 'normal');
+    end
+
+    [maxT1, linearIndex1] = max(T_dict{1}(:));
+    [maxT2, linearIndex2] = max(T_dict{2}(:));   
+    [row1, col1] = ind2sub(size(T_dict{1}), linearIndex1);
+    [row2, col2] = ind2sub(size(T_dict{2}), linearIndex2);
+    fprintf('Max Temp = %.4f at (row=%d, col=%d)\n', maxT1, Ny+1-row1, col1);
+    fprintf('Max Temp = %.4f at (row=%d, col=%d)\n', maxT2, Ny+1-row2, col2);
 end
 %% Gauss Scidel Iterative Solver (Case-4)
 function [T, cnvrg_val] = GaussSeidelSolver(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly)
@@ -263,44 +339,7 @@ function [T, cnvrg_val] = GaussSeidelSolvernew(T, nodesx, nodesy, dx, dy, Nx, Ny
         end
 
         cnvrg_val = calcResErr(T, nodesx, nodesy, Nx, Ny, dx, dy, Lx, Ly, S);
-    end
-%% Gauss Scidel Iterative Solver (Case-3)
-    function [T, cnvrg_val] = GaussSeidelSolverCase3(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly)
-        S = -1.5; q = 5000;
-        % Boundary Conditions for 1
-        T(1, :) = 15;
-        % Boundary Condition for 3
-        T(end, :) = 10;
-        for i = 2:Ny+1
-            y = nodesy(i) - nodesy(1);
-            k = 16*(y/Ly) + 16;
-
-            for j = 2:Nx+1
-                [aW, aE, aS, aN, aP, Su] = getCoeffs(i, j, nodesx, nodesy, k, dx, dy, S);
-
-                TW = T(i, j-1);
-                TE = T(i, j+1);
-                TS = T(i-1, j);
-                TN = T(i+1, j);
-
-                TP = (aW*TW + aE*TE + aS*TS + aN*TN + Su) / aP;
-                T(i, j) = TP;
-
-                % Boundary Condition for 2
-                if j == Nx+1
-                    T(i, end) = T(i, end-1) - (q/k) * (nodesx(end) - nodesx(end-1));
-                end
-
-                % Boundary Condition for 4
-                if j == 2
-                    T(i, 1) = T(i, 2);
-                end
-
-            end
-        end
-
-        cnvrg_val = calcResErr(T, nodesx, nodesy, Nx, Ny, dx, dy, Lx, Ly, S);
-    end
+end
 %% Residual Error Calculation
 function cnvrg_val = calcResErr(T, nodesx, nodesy, Nx, Ny, dx, dy, Lx, Ly, S)
 ResErr_Matrx = zeros(Nx+2, Ny+2);
