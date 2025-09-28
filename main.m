@@ -4,7 +4,8 @@ Lx = 1;    % Length of the mesh in x-direction
 Ly = 0.5;  % Length of the mesh in y-direction
 
 fprintf(['Plot the mesh: Section no.1 \nGauss Seidel Solver: Section no.2 \n' ...
-    'Prove mesh independence: Section no.3 \nPlot Heat flow (vector plot): Section no.4 \n'])
+    'Prove mesh independence: Section no.3 \nEffect of different error tolerance: Section no.4 \n' ...
+    'Plot Heat flow (vector plot): Section no.5 \n'])
 section = input('What do you want to do? Pls enter the Section No.');
 
 if section ~= 3
@@ -14,7 +15,7 @@ if section ~= 3
     str_y = input('Enter the stretch(%) you would like in y-direction: ');
 end
 
-if section ~= 1
+if section ~= 1 && section ~= 4
     epsilon = input('Enter error tolerance you would like to set: ');
 end
 %% Plotting the mesh (Section-1)
@@ -68,9 +69,9 @@ if section == 3
     Ny = [10, 20, 40, 80];
     str_x = 0; str_y = 0;
     
-    [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx(l), Ny(l), Lx, Ly, str_x, str_y);
     max_iter = 100000;
     for l = 1:length(Nx)
+        [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx(l), Ny(l), Lx, Ly, str_x, str_y);
         fprintf('Solving for %dx%d \n', Nx(l), Ny(l))
         T = zeros(Ny(l)+2, Nx(l)+2);
     
@@ -78,8 +79,6 @@ if section == 3
             [T, cnvrg_val] = GaussSeidelSolver(T, nodesx, nodesy, dx, dy, Nx(l), Ny(l), Lx, Ly);
             if cnvrg_val < epsilon
                 break
-            else
-                continue
             end
         end
     
@@ -91,12 +90,53 @@ if section == 3
         disp('Done')
     end
     
-    fprintf('Std Deviation of Avg Temp in left section is %.2f \n', std(avgT_LeftSec))
-    fprintf('Std Deviation of Avg Temp in middle section is %.2f \n', std(avgT_MiddleSec))
-    fprintf('Std Deviation of Avg Temp in right section is %.2f \n', std(avgT_RightSec))
+    fprintf('Avg Temp in left section with variation is %.2f(+-)%.2f \n', mean(avgT_LeftSec), std(avgT_LeftSec))
+    fprintf('Avg Temp in middle section with variation is %.2f(+-)%.2f \n', mean(avgT_MiddleSec), std(avgT_MiddleSec))
+    fprintf('Avg Temp in right section with variation is %.2f(+-)%.2f \n', mean(avgT_RightSec), std(avgT_RightSec))
 end
-%% Plotting Heat Flow (Section-4)
+%% Effect of different error tolerance (Section-4)
 if section == 4
+    figure
+    colors = {'r', 'g', 'b'};              
+    markers = {'-o', '-s', '-^'};         
+
+    [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx, Ny, Lx, Ly, str_x, str_y);
+    epsilon = [1e-4, 1e-5, 1e-6];
+    T_dict = cell(1, length(epsilon));
+    max_iter = 100000;
+    for i = 1:length(epsilon)
+        T = zeros(Ny+2, Nx+2);
+        eps = epsilon(i);
+        residuals = [];
+        for n = 1:max_iter
+            [T, cnvrg_val] = GaussSeidelSolver(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly);
+            residuals(n) = cnvrg_val;
+        
+            if cnvrg_val < eps
+                disp('Convergence has been achieved')
+                fprintf('No.of iterations taken for eps = %.0e is: %d \n', eps, n)
+                T_dict{i, 1} = T;
+                break
+            end
+        end
+ 
+         plot(1:length(residuals), residuals, markers{i}, 'Color', colors{i}, ...
+             'DisplayName', sprintf('eps = %.0e', eps));
+        hold on
+    end
+    title('Convergence History');
+    xlabel('Iteration Number');
+    ylabel('Residual');
+    legend show
+    grid on;
+    
+    err_norm_1 = norm(T_dict{1}(:) - T_dict{3}(:), 2);
+    err_norm_2 = norm(T_dict{2}(:) - T_dict{3}(:), 2);   % L2 norm
+    fprintf('L2 norm difference (eps=1e-4 vs 1e-6): %.6e\n', err_norm_1);
+    fprintf('L2 norm difference (eps=1e-5 vs 1e-6): %.6e\n', err_norm_1);
+end
+%% Plotting Heat Flow (Section-5)
+if section == 5
     [x_lineee, y_lineee, dx, dy, nodesx, nodesy] = generateMesh(Nx, Ny, Lx, Ly, str_x, str_y);
     
     T = zeros(Ny+2, Nx+2);
@@ -140,7 +180,7 @@ if section == 4
     
     % Heat-flux Vector plot
     figure;
-    contourf(X_nodes, Y_nodes, T, 20, "LineStyle", 'none');
+    contourf(X_nodes, Y_nodes, T, 30, "LineStyle", 'none');
     c = colorbar;
     c.Label.String = 'Temperature';
     c.Label.FontSize = 12;
