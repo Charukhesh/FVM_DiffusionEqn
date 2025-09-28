@@ -42,10 +42,12 @@ The project is contained within a single main script with all necessary function
 FVM_DiffusionEqn/
 │
 ├── main.m
+├── report.pdf
 └── README.md
 ```
 
 - **main.m**: The main MATLAB script containing all the code. It is interactive and allows the user to select from various analysis modes, including mesh generation, solving, convergence studies, and visualization.
+- **report.pdf**: The detailed project report explaining the theoretical background, implementation, and analysis of the results.
 
 ## 🚀 How to Run and Use This Project
 
