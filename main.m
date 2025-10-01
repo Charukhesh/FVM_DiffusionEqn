@@ -286,7 +286,8 @@ for i = 2:Ny+1
     T(i, end) = 5 - 5*(y/Ly) + 15*sin(pi*y/Ly);
 
     for j = fliplr(2:Nx+1)
-        [aW, aE, aS, aN, aP, Su] = getCoeffs(i, j, nodesx, nodesy, k, dx, dy, S);
+        TP_old = T(i, j-1);
+        [aW, aE, aS, aN, aP, Su] = getCoeffs(i, j, nodesx, nodesy, k, dx, dy, S, TP_old);
 
         TW = T(i, j-1);
         TE = T(i, j+1);
@@ -320,7 +321,8 @@ function [T, cnvrg_val] = GaussSeidelSolvernew(T, nodesx, nodesy, dx, dy, Nx, Ny
             % Boundary Condition for 2
             T(i, end) = 5 - 5*(y/Ly) + 15*sin(pi*y/Ly);
             for j = fliplr(2:Nx+1)
-                [aW, aE, aS, aN, aP, Su] = getCoeffs(i, j, nodesx, nodesy, k, dx, dy, S);
+                TP_old = T(i, j-1);
+                [aW, aE, aS, aN, aP, Su] = getCoeffs(i, j, nodesx, nodesy, k, dx, dy, S, TP_old);
 
                 TW = T(i, j-1);
                 TE = T(i, j+1);
@@ -350,7 +352,8 @@ for i = 2:Ny+1
     k = 16*(y/Ly) + 16;
 
     for j = 2:Nx+1
-        [aW, aE, aS, aN, aP, Su] = getCoeffs(i, j, nodesx, nodesy, k, dx, dy, S);
+        TP_old = T(i, j-1);
+        [aW, aE, aS, aN, aP, Su] = getCoeffs(i, j, nodesx, nodesy, k, dx, dy, S, TP_old);
 
         TW = T(i, j-1);
         TE = T(i, j+1);
@@ -366,7 +369,7 @@ end
 cnvrg_val = sum(ResErr_Matrx(:));
 end
 %% Function to get coefficients for a given cell
-function [aW, aE, aS, aN, aP, Su] = getCoeffs(i, j, nodesx, nodesy, k, dx, dy, S)
+function [aW, aE, aS, aN, aP, Su] = getCoeffs(i, j, nodesx, nodesy, k, dx, dy, S, TP_old)
 delx = dx(j);
 dely = dy(i);
 
@@ -379,9 +382,11 @@ aW = k * dely / distx_back;
 aE = k * dely / distx_front;
 aS = k * delx / disty_down;
 aN = k * delx / disty_up;
-aP = aW + aE + aS + aN;
 
-Su = S * delx * dely;
+Su = 0;
+Sp = (abs(S) * delx * dely) / TP_old;
+
+aP = aW + aE + aS + aN - Sp;
 end
 %% Create Mesh
 % To stretch/contract from the centre of the mesh in both directions
