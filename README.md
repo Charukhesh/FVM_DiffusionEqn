@@ -134,7 +134,7 @@ Below is a guide to each section and the inputs required.
 ## 📊 Key Analyses and Insights
 
 This project demonstrates several important CFD concepts:
-1.  **Mesh Independence**: The study in `Section 3` confirms that as the grid is refined, the solution converges to a stable result. For this problem, the average temperatures vary by less than 1.2 K across different grid densities, indicating that a moderately fine mesh (e.g., 40x40) is sufficient.
+1.  **Mesh Independence**: The study in `Section 3` confirms that as the grid is refined, the solution converges to a stable result. For this problem, the average temperatures vary by less than 1.2 units across different grid densities, indicating that a moderately fine mesh (e.g., 40x40) is sufficient.
 
 2.  **Mesh Stretching for High-Gradient Regions**: The code allows for mesh refinement near boundaries (`Section 1`). This is crucial for accurately capturing the steep temperature gradients caused by the Neumann and complex Dirichlet boundary conditions without needing an excessively fine mesh throughout the domain.
 
