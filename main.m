@@ -115,7 +115,7 @@ if section == 4
             if cnvrg_val < eps
                 disp('Convergence has been achieved')
                 fprintf('No.of iterations taken for eps = %.0e is: %d \n', eps, n)
-                T_dict{i, 1} = T;
+                T_dict{1, i} = T;
                 break
             end
         end
@@ -286,6 +286,10 @@ for i = 2:Ny+1
     T(i, end) = 5 - 5*(y/Ly) + 15*sin(pi*y/Ly);
 
     for j = fliplr(2:Nx+1)
+        % Linear drop for Boundary 3
+        % x = nodesx(j) - nodesx(1);
+        % T(end, j) = 50 - 50*x;
+        
         TP_old = T(i, j-1);
         [aW, aE, aS, aN, aP, Su] = getCoeffs(i, j, nodesx, nodesy, k, dx, dy, S, TP_old);
 
@@ -299,7 +303,7 @@ for i = 2:Ny+1
 
         % Boundary Condition for 4
         if j == 2
-            T(i, 1) = T(i, 2) - (q/k) * (nodesx(2) - nodesx(1));
+            T(i, 1) = T(i, 2) + (q/k) * (nodesx(2) - nodesx(1));
         end
 
     end
@@ -311,9 +315,9 @@ end
 function [T, cnvrg_val] = GaussSeidelSolvernew(T, nodesx, nodesy, dx, dy, Nx, Ny, Lx, Ly)
         S = -1.5; q = -5000;
         % Boundary Conditions for 1
-        T(1, :) = 15;
+        T(1, :) = 10;
         % Boundary Condition for 4
-        T(:, 1) = 20;
+        T(:, 1) = 15;
         for i = 2:Ny+1
             y = nodesy(i) - nodesy(1);
             k = 16*(y/Ly) + 16;
@@ -334,7 +338,7 @@ function [T, cnvrg_val] = GaussSeidelSolvernew(T, nodesx, nodesy, dx, dy, Nx, Ny
 
                 % Boundary Condition for 3
                 if i == Nx+1
-                    T(end, j) = T(end-1, j) - (q/k) * (nodesy(end) - nodesy(end-1));
+                    T(end, j) = T(end-1, j) + (q/k) * (nodesy(end) - nodesy(end-1));
                 end
 
             end
